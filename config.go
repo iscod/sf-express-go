@@ -1,7 +1,6 @@
 package sfexpress
 
 import (
-	"encoding/xml"
 	"fmt"
 )
 
@@ -42,24 +41,6 @@ type Config struct {
 	Lang       string `zh-CN`
 }
 
-type export struct {
-	name string
-	url  string
-}
-
-//type ResponseXml struct {
-//	XMLName xml.Name `xml:"Response"`
-//	Head    string   `xml:"Head"`
-//	Err     Err      `xml:"ERROR"`
-//	Body    Body     `xml:"Body"`
-//}
-
-type Body struct {
-	OrderResponse       OrderResponse       `xml:"OrderResponse"`
-	RouteResponse       RouteResponse       `xml:"RouteResponse"`
-	OrderFilterResponse OrderFilterResponse `xml:"OrderFilterResponse"`
-}
-
 type OrderResponse struct {
 	OrderId      string `xml:"orderid,attr"`
 	MailNo       string `xml:"mailno,attr"`
@@ -68,6 +49,11 @@ type OrderResponse struct {
 	FilterResult string `xml:"filter_result,attr"`
 	Remark       string `xml:"remark,attr"`
 	ResStatus    string `xml:"res_status,attr"`
+}
+
+type OrderConfirmResponse struct {
+	OrderId string  `xml:"orderid,attr"`
+	ResStatus int  `xml:"res_status,attr"`
 }
 
 type RouteResponse struct {
@@ -88,22 +74,6 @@ type Route struct {
 	AcceptTime    string `xml:"accept_time,attr"`
 	AcceptAddress string `xml:"accept_address,attr"`
 	Opcode        string `xml:"opcode,attr"`
-}
-
-type RequestXml struct {
-	XMLName     xml.Name    `xml:"Request"`
-	Service     ServiceName `xml:"service,attr"`
-	Lang        string      `xml:"lang,attr"`
-	Head        string      `xml:"Head"`
-	RequestBody RequestBody `xml:"Body"`
-}
-
-type RequestBody struct {
-	OrderSearch  OrderSearch  `xml:"OrderSearch"`
-	OrderConfirm OrderConfirm `xml:"OrderConfirm"`
-	Order        Order        `xml:"Order"`
-	RouteRequest RouteRequest `xml:"RouteRequest"`
-	OrderFilter  OrderFilter  `xml:"OrderFilter"`
 }
 
 type RouteRequest struct {

@@ -59,7 +59,7 @@ func main() {
 	}
 
 	//order query
-	order, err := c.OrderQuery( sfexpress.OrderSearch{OrderId: o.OrderId, SearchType: 1})
+	order, err := c.OrderQuery(sfexpress.OrderSearch{OrderId: o.OrderId, SearchType: 1})
 	if err != nil {
 		fmt.Printf("❌ query: %s\n", err)
 	} else {
@@ -71,19 +71,19 @@ func main() {
 	if err != nil {
 		fmt.Printf("❌ Confirm: %s\n", err)
 	} else {
-		fmt.Printf("✅ Confirm:  orderId: %s, MailNo: %s\n", oc.OrderId, oc.ResStatus)
+		fmt.Printf("✅ Confirm:  orderId: %s, ResStatus: %d\n", oc.OrderId, oc.ResStatus)
 	}
 
 	//route Query By OrderNo
-	oro, err := c.OrderRouteService(sfexpress.RouteRequest{TrackingType:1, TrackingNumber: "XJFS_071100251"})
+	oro, err := c.OrderRouteService(sfexpress.RouteRequest{TrackingType: 1, TrackingNumber: "XJFS_071100251"})
 	if err != nil {
 		fmt.Printf("❌ RouteQueryByOrderNo: %s", err)
 	} else {
-		fmt.Printf("✅ RouteQueryByOrderNo:  orderId: %s, MailNo: %s, %v", oro.OrderId, oro.MailNo, oro.Route)
+		for _, i := range oro {
+			fmt.Printf("✅ RouteQueryByOrderNo:  orderId: %s, MailNo: %s, %v", i.OrderId, i.MailNo, i.Route)
+		}
 	}
 }
-
-
 ```
 
 ## Development
