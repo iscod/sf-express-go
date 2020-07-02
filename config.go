@@ -5,14 +5,18 @@ import (
 	"fmt"
 )
 
+type ServiceName string
+
 var (
-	OrderServiceName       = "OrderService"        //下单接口
-	OrderSearchServiceName = "OrderSearchService"  //订单查询
-	OrderConfirmService    = "OrderConfirmService" //订单确认和取消
-	RequestServiceLang     = "zh-CN"
-	RequestServiceHead     = "SLKJ2019"
-	ServiceURL             = "http://bsp-oisp.sf-express.com/bsp-oisp/sfexpressService"
-	ServiceURLHttps        = "https://bsp-oisp.sf-express.com/bsp-oisp/sfexpressService"
+	OrderService        ServiceName = "OrderService"        //下单接口
+	OrderSearchService  ServiceName = "OrderSearchService"  //订单查询
+	OrderConfirmService ServiceName = "OrderConfirmService" //订单确认和取消
+	OrderFilterService  ServiceName = "OrderFilterService"  //订单筛选接口
+	OrderRouteService   ServiceName = "RouteService"        //订单筛选接口
+	RequestServiceLang              = "zh-CN"
+	RequestServiceHead              = "SLKJ2019"
+	ServiceURL                      = "http://bsp-oisp.sf-express.com/bsp-oisp/sfexpressService"
+	ServiceURLHttps                 = "https://bsp-oisp.sf-express.com/bsp-oisp/sfexpressService"
 )
 
 type ExpressTypeCode struct {
@@ -43,17 +47,12 @@ type export struct {
 	url  string
 }
 
-type Err struct {
-	ErrMsg  string `xml:",chardata"`
-	ErrCode string `xml:"code,attr"`
-}
-
-type ResponseXml struct {
-	XMLName xml.Name `xml:"Response"`
-	Head    string   `xml:"Head"`
-	Err     Err      `xml:"ERROR"`
-	Body    Body     `xml:"Body"`
-}
+//type ResponseXml struct {
+//	XMLName xml.Name `xml:"Response"`
+//	Head    string   `xml:"Head"`
+//	Err     Err      `xml:"ERROR"`
+//	Body    Body     `xml:"Body"`
+//}
 
 type Body struct {
 	OrderResponse       OrderResponse       `xml:"OrderResponse"`
@@ -93,7 +92,7 @@ type Route struct {
 
 type RequestXml struct {
 	XMLName     xml.Name    `xml:"Request"`
-	Service     string      `xml:"service,attr"`
+	Service     ServiceName `xml:"service,attr"`
 	Lang        string      `xml:"lang,attr"`
 	Head        string      `xml:"Head"`
 	RequestBody RequestBody `xml:"Body"`
@@ -108,7 +107,7 @@ type RequestBody struct {
 }
 
 type RouteRequest struct {
-	TrackingType   int `xml:"tracking_type,attr"`   //可选，查询号类别: 1:根据顺丰运单号查询,order节点中tracking_number将被当作顺丰运单号处理 2:根据客户订单号查询,order节点中tracking_number将被当作客户订单号处理 3:逆向单,根据客户原始订单号查询,order节点中tracking_number将被当作逆向单原始订单号处理
+	TrackingType   int    `xml:"tracking_type,attr"`   //可选，查询号类别: 1:根据顺丰运单号查询,order节点中tracking_number将被当作顺丰运单号处理 2:根据客户订单号查询,order节点中tracking_number将被当作客户订单号处理 3:逆向单,根据客户原始订单号查询,order节点中tracking_number将被当作逆向单原始订单号处理
 	TrackingNumber string `xml:"tracking_number,attr"` //查询号: 如果tracking_type=1,则此值为顺丰运单号 如果tracking_type=2,则此值为客户订单号 如果tracking_type=3,则此值为逆向单原始订单号 如果有多个单号,以逗号分隔,如"123,124,125"。
 	MethodType     string `xml:"method_type,attr"`     //可选，路由查询类别: 1:标准路由查询
 	CheckPhoneNo   string `xml:"check_phoneNo,attr"`   //可选，校验电话号码后四位值; 按运单号查询路由时,可通过该参数传入用于校验的电话号码后4位(寄方或收方都可以),如果涉及多个运单号,对应该值也需按顺序传入多个,并以英文逗号隔开。
@@ -168,6 +167,7 @@ type OrderSearch struct {
 }
 
 type OrderConfirm struct {
+	OrderId        string `xml:"orderid,attr"`          //客户订单号
 	MailNo         string `xml:"mailno,attr"`           //顺丰母运单号如果dealtype=1,必填
 	DealType       string `xml:"dealtype,attr"`         //可选，客户订单操作标识: 1:确认 2:取消
 	CustomsBatchs  string `xml:"customs_batchs,attr"`   //可选，报关批次

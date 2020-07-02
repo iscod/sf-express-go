@@ -59,7 +59,7 @@ func main() {
 	}
 
 	//order query
-	order, err := c.OrderQuery( sfexpress.OrderSearch{OrderId: "QIAO-20171231001", SearchType: 1})
+	order, err := c.OrderQuery( sfexpress.OrderSearch{OrderId: o.OrderId, SearchType: 1})
 	if err != nil {
 		fmt.Printf("❌ query: %s\n", err)
 	} else {
@@ -67,7 +67,7 @@ func main() {
 	}
 
 	//order confirm&cancel
-	oc, err := c.OrderConfirm( sfexpress.OrderConfirm{MailNo: "XJFS_071100251", DealType: "2"})
+	oc, err := c.OrderConfirm(sfexpress.OrderConfirm{OrderId: o.OrderId, DealType: "2"})
 	if err != nil {
 		fmt.Printf("❌ Confirm: %s\n", err)
 	} else {
@@ -82,6 +82,7 @@ func main() {
 		fmt.Printf("✅ RouteQueryByOrderNo:  orderId: %s, MailNo: %s, %v", oro.OrderId, oro.MailNo, oro.Route)
 	}
 }
+
 
 ```
 
