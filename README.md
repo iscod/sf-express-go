@@ -75,7 +75,7 @@ func main() {
 	}
 
 	//route Query By OrderNo
-	oro, err := c.OrderRouteService(sfexpress.RouteRequest{TrackingType: 1, TrackingNumber: "XJFS_071100251"})
+	oro, err := c.OrderRouteService(sfexpress.RouteRequest{TrackingType: 1, TrackingNumber: o.MailNo})
 	if err != nil {
 		fmt.Printf("❌ RouteQueryByOrderNo: %s", err)
 	} else {

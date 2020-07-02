@@ -172,6 +172,7 @@ func (c *Config) doRequest(requestBody Body) (*ResponseBody, error) {
 	}
 
 	r := new(ResponseXml)
+
 	err = xml.Unmarshal([]byte(b), r)
 	if err != nil {
 		return nil, err
