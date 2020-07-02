@@ -1,227 +1,60 @@
 package sfexpress
 
-import (
-	"bytes"
-	"encoding/xml"
-	"crypto/md5"
-	"encoding/base64"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"strings"
-)
+// Order 下订单接口
+func (c *Config) Order(order Order) (*OrderResponse, error) {
+	if order.CustId == "" && c.Custid != "" {
+		order.CustId = c.Custid
+	}
+	body, err := c.doRequest(RequestBody{Order: order})
+	if err != nil {
+		return nil, err
+	}
 
-func (c *Config) postData(xml []byte) string {
-	var buf bytes.Buffer
-	buf.Write(xml)
-	buf.Write([]byte(c.CheckWord))
-
-	s := c.sgin(buf.Bytes())
-	v := url.Values{}
-	v.Add("xml", fmt.Sprintf("%s", xml))
-	v.Add("verifyCode", s)
-	return v.Encode()
+	return &body.OrderResponse, nil
 }
 
-func (c *Config) sgin(s []byte) string {
-	has := md5.Sum(s)
-	md5str := fmt.Sprintf("%s", has)
-	encodeString := base64.StdEncoding.EncodeToString([]byte(md5str))
-	return encodeString
+// OrderQuery 订单查询
+// 因Internet环境下,网络不是绝对可靠,用户系统下订单到顺丰后,不一定可以收到顺丰系统返回的数据,此接口用于在未收到返回数据时,查询下订单(含筛选)接口客户订单当前的处理情况。
+func (c *Config) OrderQuery(orderSearch OrderSearch) (*OrderResponse, error) {
+	body, err := c.doRequest(RequestBody{OrderSearch: orderSearch})
+	if err != nil {
+		return nil, err
+	}
+
+	return &body.OrderResponse, nil
 }
 
-func (c *Config) OrderPush(orderid string, jUser UserInfo, dUser UserInfo, expressType int, payMethod int, addedService AddedService, cargo string) (*OrderResponse, error) {
-	req_xml := RequestXml{
-		XMLName: xml.Name{Space: "Request"},
-		Service: OrderServiceName,
-		Lang:    RequestServiceLang,
-		Head:    RequestServiceHead,
-		RequestBody: RequestBody{
-			OrderPush: OrderPush{
-				OrderId:        orderid,
-				ExpressType:    expressType,
-				PayMethod:      payMethod,
-				JCompany:       jUser.Company,
-				JContact:       jUser.Contact,
-				JTel:           jUser.Tel,
-				JMobile:        jUser.Mobile,
-				JProvince:      jUser.Province,
-				JCity:          jUser.City,
-				JCounty:        jUser.County,
-				JAddress:       jUser.Address,
-				DCompany:       dUser.Company,
-				DContact:       dUser.Contact,
-				DTel:           dUser.Tel,
-				DMobile:        dUser.Mobile,
-				DProvince:      dUser.Province,
-				DCity:          dUser.City,
-				DCounty:        dUser.County,
-				DAddress:       dUser.Address,
-				ParcelQuantity: "1",
-				Custid:         c.Custid,
-				AddedService:   addedService,
-				Cargo:          "sss",
-			},
-		},
-	}
-	xml_byte, err := xml.Marshal(req_xml)
+// OrderConfirm 订单确认/取消接口
+// 客户在确定将货物交付给顺丰托运后,将面单上的一些重要信息,如快件重量通过此接口发送给顺丰。
+// 客户在发货前取消订单
+// 订单取消之后,订单号也是不能重复利用的。
+func (c *Config) OrderConfirm(orderConfirm OrderConfirm) (*OrderResponse, error) {
+	body, err := c.doRequest(RequestBody{OrderConfirm: orderConfirm})
 	if err != nil {
 		return nil, err
 	}
-
-	p := c.postData(xml_byte)
-	body := strings.NewReader(p)
-	resp, err := http.Post(ServiceURL, "application/x-www-form-urlencoded;charset=utf-8", body)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	r := new(ResponseXml)
-	err = xml.Unmarshal([]byte(b), r)
-	if err != nil {
-		return nil, err
-	}
-	if r.Head != "OK" {
-		return nil, r.Err
-	}
-
-	return &r.Body.OrderResponse, nil
+	return &body.OrderResponse, nil
 }
 
-func (c *Config) OrderQuery(orderid string) (*OrderResponse, error) {
-	req_xml := RequestXml{
-		XMLName:     xml.Name{Space: "Request"},
-		Service:     OrderSearchServiceName,
-		Lang:        "zh-CN",
-		Head:        "SLKJ2019",
-		RequestBody: RequestBody{OrderSearch: OrderSearch{OrderId: orderid}},
-	}
-	xml_byte, err := xml.Marshal(req_xml)
+// OrderFilterService 客户系统通过此接口向顺丰系统发送主动的筛单请求,用于判断客户的收、派地址是否属于顺丰的收派范围。
+func (c *Config) OrderFilterService(orderFilter OrderFilter) (*OrderFilterResponse, error) {
+	body, err := c.doRequest(RequestBody{OrderFilter: orderFilter})
 	if err != nil {
 		return nil, err
 	}
-	p := c.postData(xml_byte)
-	body := strings.NewReader(p)
-	resp, err := http.Post(ServiceURL, "application/x-www-form-urlencoded;charset=utf-8", body)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	r := new(ResponseXml)
-	err = xml.Unmarshal([]byte(b), r)
-	if err != nil {
-		return nil, err
-	}
-
-	if r.Head != "OK" {
-		return nil, r.Err
-	}
-
-	return &r.Body.OrderResponse, nil
+	return &body.OrderFilterResponse, nil
 }
 
-func (c *Config) OrderConfirm(orderid string, dealtype string) (*OrderResponse, error) {
-	req_xml := RequestXml{
-		XMLName: xml.Name{Space: "Request"},
-		Service: "OrderConfirmService",
-		Lang:    "zh-CN",
-		Head:    "SLKJ2019",
-		RequestBody: RequestBody{
-			OrderConfirm: OrderConfirm{
-				OrderId:  orderid,
-				DealType: dealtype,
-			},
-		},
-	}
-	xml_byte, err := xml.Marshal(req_xml)
+//OrderRouteService 路由查询接口
+//客户可通过此接口查询顺丰运单路由,系统将返回当前时间点已发生的路由信息。
+//路由查询接口支持三种查询方式:
+//根据通过丰桥接口下单的订单号查询,系统校验信息匹配将返回对应运单路由信息。
+//根据运单号+月结卡号(需与传入的顾客编码绑定)查询,系统校验信息归属关系正确将返回对应运单路由信息。
+//根据运单号+运单对应的收寄人任一方电话号码后4位(参数check_phoneNo中传入)查询,系统校验信息匹配将返回对应运单路由信息。
+func (c *Config) OrderRouteService(routeRequest RouteRequest) (*RouteResponse, error) {
+	body, err := c.doRequest(RequestBody{RouteRequest: routeRequest})
 	if err != nil {
 		return nil, err
 	}
-
-	p := c.postData(xml_byte)
-	body := strings.NewReader(p)
-	resp, err := http.Post(ServiceURL, "application/x-www-form-urlencoded;charset=utf-8", body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	r := new(ResponseXml)
-	err = xml.Unmarshal([]byte(b), r)
-	if err != nil {
-		return nil, err
-	}
-
-	if r.Head != "OK" {
-		return nil, r.Err
-	}
-
-	return &r.Body.OrderResponse, nil
-}
-
-func (c *Config) OrderRouteService(no string, trackingType string, methodType string) (*RouteResponse, error) {
-	req_xml := RequestXml{
-		XMLName:     xml.Name{Space: "Request"},
-		Service:     "RouteService",
-		Lang:        "zh-CN",
-		Head:        "SLKJ2019",
-		RequestBody: RequestBody{RouteRequest: RouteRequest{TrackingNumber: no, TrackingType: trackingType, MethodType: methodType}},
-	}
-	xml_byte, err := xml.Marshal(req_xml)
-	if err != nil {
-		return nil, err
-	}
-	p := c.postData(xml_byte)
-	body := strings.NewReader(p)
-	resp, err := http.Post(ServiceURL, "application/x-www-form-urlencoded;charset=utf-8", body)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	r := new(ResponseXml)
-	err = xml.Unmarshal([]byte(b), r)
-	if err != nil {
-		return nil, err
-	}
-
-	if r.Head != "OK" {
-		return nil, r.Err
-	}
-
-	return &r.Body.RouteResponse, nil
-}
-
-func (c *Config) OrderRouteQueryByOrderNo(orderno string) (*RouteResponse, error) {
-	o, err := c.OrderRouteService(orderno, "2", "1")
-	return o, err
-}
-
-func (c *Config) OrderRouteQueryByMailNo(mailno string) (*RouteResponse, error) {
-	o, err := c.OrderRouteService(mailno, "1", "1")
-	return o, err
+	return &body.RouteResponse, nil
 }

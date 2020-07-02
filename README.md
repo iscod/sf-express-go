@@ -15,7 +15,7 @@ package main
 
 import (
 	"fmt"
-    "math/rand"
+	"math/rand"
 	sfexpress "sf-express-go"
 	"time"
 )
@@ -26,28 +26,32 @@ func main() {
 	orderId := "SF-" + time.Now().Format("20060102150405") + string(rand.Intn(100))
 
 	//order push
-	o, err := c.OrderPush(orderId, sfexpress.UserInfo{
-		Company:  "顺丰镖局",
-		Contact:  "发件人",
-		Tel:      "15012345678",
-		Mobile:   "",
-		Province: "广东省",
-		City:     "深圳市",
-		County:   "南山区",
-		Address:  "福田区新洲十一街万基商务大厦26楼",
-	}, sfexpress.UserInfo{
-		Company:  "顺丰镖局",
-		Contact:  "收件人",
-		Tel:      "15012345678",
-		Mobile:   "",
-		Province: "广东省",
-		City:     "深圳市",
-		County:   "南山区",
-		Address:  "福田区新洲十一街万基商务大厦26楼",
-	}, 1, 1, sfexpress.AddedService{
-		Name:  "COD",
-		Value: "1.01",
-	}, "iphone x")
+	o, err := c.Order(sfexpress.Order{
+		OrderId:     orderId,
+		ExpressType: 1,
+		PayMethod:   1,
+		JCompany:    "顺丰镖局",
+		JContact:    "虾哥",
+		JTel:        "15012345678",
+		JMobile:     "",
+		JProvince:   "广东省",
+		JCity:       "深圳市",
+		JCounty:     "南山区",
+		JAddress:    "福田区新洲十一街万基商务大厦26楼",
+		DCompany:    "顺丰镖局",
+		DContact:    "虾哥",
+		DTel:        "15012345678",
+		DMobile:     "",
+		DProvince:   "广东省",
+		DCity:       "深圳市",
+		DCounty:     "南山区",
+		DAddress:    "福田区新洲十一街万基商务大厦26楼",
+		AddedService: sfexpress.AddedService{
+			Name:  "COD",
+			Value: "1.01",
+		},
+		Cargo: "iphone x",
+	})
 	if err != nil {
 		fmt.Printf("❌ Push: %s\n", err.Error())
 	} else {
@@ -55,7 +59,7 @@ func main() {
 	}
 
 	//order query
-	order, err := c.OrderQuery("QIAO-20171231001")
+	order, err := c.OrderQuery( sfexpress.OrderSearch{OrderId: "QIAO-20171231001", SearchType: 1})
 	if err != nil {
 		fmt.Printf("❌ query: %s\n", err)
 	} else {
@@ -63,7 +67,7 @@ func main() {
 	}
 
 	//order confirm&cancel
-	oc, err := c.OrderConfirm("XJFS_071100251", "2")
+	oc, err := c.OrderConfirm( sfexpress.OrderConfirm{MailNo: "XJFS_071100251", DealType: "2"})
 	if err != nil {
 		fmt.Printf("❌ Confirm: %s\n", err)
 	} else {
@@ -71,7 +75,7 @@ func main() {
 	}
 
 	//route Query By OrderNo
-	oro, err := c.OrderRouteQueryByOrderNo("XJFS_071100251")
+	oro, err := c.OrderRouteService(sfexpress.RouteRequest{TrackingType:1, TrackingNumber: "XJFS_071100251"})
 	if err != nil {
 		fmt.Printf("❌ RouteQueryByOrderNo: %s", err)
 	} else {
